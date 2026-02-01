@@ -57,6 +57,15 @@ services:
     depends_on:
       - prometheus
 
+    # ... (после grafana) ...
+
+  ai-service:
+    image: saydo228/my-ai-service:v1  # <--- ТВОЙ ОБРАЗ
+    container_name: ai-backend
+    restart: always
+    # ports:  <--- ПОРТЫ НЕ НУЖНЫ! Мы общаемся через Nginx внутри сети Docker.
+    #   - "5000:5000"
+
 volumes:
   prometheus_data:
   grafana_data:

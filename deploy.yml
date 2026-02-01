@@ -36,6 +36,7 @@
       copy:
         src: files/nginx.conf
         dest: /opt/my-app/nginx.conf
+        notify: Restart Nginx
         mode: '0644'
 
 
@@ -44,3 +45,13 @@
       args:
         chdir: /opt/my-app # Сначала перейти в эту папку, потом выполнить
 
+
+
+    # ... (конец блока tasks)
+
+  handlers:
+    - name: Restart Nginx
+      community.docker.docker_container:
+        name: my-production-site
+        state: started
+        restart: yes
