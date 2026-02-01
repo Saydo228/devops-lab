@@ -5,7 +5,7 @@ app = Flask(__name__)
 
 @app.route('/')
 def home():
-    return "AI Service is Ready! (v1)"
+    return "AI Service is Ready! (v2)"
 
 @app.route('/predict', methods=['POST'])
 def predict():
