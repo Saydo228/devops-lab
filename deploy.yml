@@ -1,0 +1,46 @@
+---
+- name: Deploy Web Application
+  hosts: servers
+  become: true # Нужны права sudo, чтобы управлять докером
+
+  tasks:
+    # 1. Создаем папку на СЕРВЕРЕ, где будет лежать наш проект
+    - name: Create project directory on remote server
+      file:
+        path: /opt/my-app
+        state: directory
+        mode: '0755'
+
+    # 2. Копируем файл с ТВОЕГО компа (WSL) на СЕРВЕР
+    - name: Copy docker-compose file
+      copy:
+        src: files/docker-compose.yml # Откуда (твой путь)
+        dest: /opt/my-app/docker-compose.yml # Куда (на сервер)
+
+    # 3. Запускаем Docker Compose
+    # Мы используем модуль shell, чтобы выполнить команду
+
+    - name: Copy prometheus config file
+      copy:
+        src: files/prometheus.yml
+        dest: /opt/my-app/prometheus.yml
+        mode: '0644' # Читать могут все, писать только владелец (root)
+
+    - name: Copy htpasswd file
+      copy:
+        src: files/.htpasswd
+        dest: /opt/my-app/.htpasswd
+        mode: '0644'
+
+    - name: Copy nginx config
+      copy:
+        src: files/nginx.conf
+        dest: /opt/my-app/nginx.conf
+        mode: '0644'
+
+
+    - name: Start services with Docker Compose
+      shell: docker compose up -d
+      args:
+        chdir: /opt/my-app # Сначала перейти в эту папку, потом выполнить
+

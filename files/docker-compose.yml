@@ -1,0 +1,62 @@
+version: '3.8'
+
+services:
+  # Наш Nginx теперь Главный (Proxy)
+  web:
+    image: nginx:latest
+    container_name: my-production-site
+    ports:
+      - "80:80" # Открываем ТОЛЬКО 80 порт (стандартный для веба)
+    volumes:
+      # Подменяем стандартный конфиг Nginx на наш
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./.htpasswd:/etc/nginx/.htpasswd:ro
+    restart: always
+    depends_on:
+      - grafana
+      - prometheus
+
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: node-exporter
+    restart: always
+    # ports: - УДАЛИЛИ! Снаружи этот порт больше не доступен.
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.sysfs=/host/sys'
+      - '--path.rootfs=/rootfs'
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    restart: always
+    # ports: - УДАЛИЛИ! Только Nginx может сюда достучаться.
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    # Важно: объясняем Прометею, что он теперь живет по адресу /prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--web.external-url=/prometheus'
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    restart: always
+    # ports: - УДАЛИЛИ!
+    volumes:
+      - grafana_data:/var/lib/grafana
+    environment:
+      # Настройки, чтобы Графана работала в папке /grafana
+      - GF_SERVER_ROOT_URL=http://localhost/grafana
+      - GF_SERVER_SERVE_FROM_SUB_PATH=true
+    depends_on:
+      - prometheus
+
+volumes:
+  prometheus_data:
+  grafana_data:
