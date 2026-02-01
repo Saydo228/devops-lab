@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # Наш Nginx теперь Главный (Proxy)
   web:

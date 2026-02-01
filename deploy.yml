@@ -1,30 +1,24 @@
----
 - name: Deploy Web Application
   hosts: servers
-  become: true # Нужны права sudo, чтобы управлять докером
+  become: true
 
   tasks:
-    # 1. Создаем папку на СЕРВЕРЕ, где будет лежать наш проект
-    - name: Create project directory on remote server
+    - name: Create project directory
       file:
         path: /opt/my-app
         state: directory
         mode: '0755'
 
-    # 2. Копируем файл с ТВОЕГО компа (WSL) на СЕРВЕР
     - name: Copy docker-compose file
       copy:
-        src: files/docker-compose.yml # Откуда (твой путь)
-        dest: /opt/my-app/docker-compose.yml # Куда (на сервер)
-
-    # 3. Запускаем Docker Compose
-    # Мы используем модуль shell, чтобы выполнить команду
+        src: files/docker-compose.yml
+        dest: /opt/my-app/docker-compose.yml
 
     - name: Copy prometheus config file
       copy:
         src: files/prometheus.yml
         dest: /opt/my-app/prometheus.yml
-        mode: '0644' # Читать могут все, писать только владелец (root)
+        mode: '0644'
 
     - name: Copy htpasswd file
       copy:
@@ -36,18 +30,19 @@
       copy:
         src: files/nginx.conf
         dest: /opt/my-app/nginx.conf
-        notify: Restart Nginx
         mode: '0644'
+      notify: Restart Nginx
 
-
+    # --- !!! ВОТ ЗДЕСЬ ИЗМЕНЕНИЯ !!! ---
+    # Мы удаляем старый блок 'shell' и ставим этот:
+    
     - name: Start services with Docker Compose
-      shell: docker compose up -d
-      args:
-        chdir: /opt/my-app # Сначала перейти в эту папку, потом выполнить
-
-
-
-    # ... (конец блока tasks)
+      community.docker.docker_compose_v2:
+        project_src: /opt/my-app   # Где лежит файл
+        pull: always               # <--- САМОЕ ВАЖНОЕ: Всегда скачивать свежий образ!
+        state: present             # Убедиться, что контейнеры запущены
+    
+    # --- КОНЕЦ ИЗМЕНЕНИЙ ---
 
   handlers:
     - name: Restart Nginx
